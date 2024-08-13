@@ -26,9 +26,6 @@ function App() {
       const dashboardData = await dashboardResponse.json();
       const exploreData = await exploreResponse.json();
 
-      console.log('Received dashboard URL:', dashboardData.url);
-      console.log('Received explore URL:', exploreData.url);
-
       setDashboardUrl(dashboardData.url);
       setExploreUrl(exploreData.url);
     } catch (error) {
@@ -36,55 +33,72 @@ function App() {
     }
   };
 
-  const embedDashboard = (url) => {
-    if (!dashboardRef.current) {
-      LookerEmbedSDK.createDashboardWithUrl(url)
-        .appendTo('#dashboard')
-        .withClassName('looker-embed')
-        .withTheme('Looker')
-        .build()
-        .connect()
-        .then((embedded) => {
-          console.log('Dashboard connected successfully');
-          dashboardRef.current = embedded;
-        })
-        .catch((error) => console.error('Error connecting to Looker embed:', error));
-    } else {
-      dashboardRef.current.connect().catch((error) => console.error('Error reconnecting to dashboard:', error));
+  const clearEmbedContainer = (containerId) => {
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.innerHTML = '';  // Clear any existing iframe
     }
   };
 
-  const embedExplore = (url) => {
-    if (!exploreRef.current) {
-      LookerEmbedSDK.createExploreWithUrl(url)
-        .appendTo('#explore')
-        .withClassName('looker-embed')
-        .withTheme('Looker')
-        .build()
-        .connect()
-        .then((embedded) => {
-          console.log('Explore connected successfully');
-          exploreRef.current = embedded;
-        })
-        .catch((error) => console.error('Error connecting to Looker embed:', error));
-    } else {
-      exploreRef.current.connect().catch((error) => console.error('Error reconnecting to explore:', error));
+  const embedDashboard = async (url) => {
+    if (dashboardRef.current) {
+      console.log('Dashboard iframe already exists, reusing it.');
+      return;
     }
+    console.log('Embedding dashboard with URL:', url);
+
+    clearEmbedContainer('dashboard');  // Clear existing content
+
+    LookerEmbedSDK.createDashboardWithUrl(url)
+      .appendTo('#dashboard')
+      .withClassName('looker-embed')
+      .withTheme('Looker')
+      .build()
+      .connect()
+      .then((embedded) => {
+        console.log('Dashboard connected successfully');
+        dashboardRef.current = embedded;
+      })
+      .catch((error) => console.error('Error connecting to Looker embed:', error));
+  };
+
+  const embedExplore = async (url) => {
+    if (exploreRef.current) {
+      console.log('Explore iframe already exists, reusing it.');
+      return;
+    }
+    console.log('Embedding explore with URL:', url);
+
+    clearEmbedContainer('explore');  // Clear existing content
+
+    LookerEmbedSDK.createExploreWithUrl(url)
+      .appendTo('#explore')
+      .withClassName('looker-embed')
+      .withTheme('Looker')
+      .build()
+      .connect()
+      .then((embedded) => {
+        console.log('Explore connected successfully');
+        exploreRef.current = embedded;
+      })
+      .catch((error) => console.error('Error connecting to Looker embed:', error));
   };
 
   useEffect(() => {
-    if (dashboardUrl && activeTab === 'dashboard') {
+    if (activeTab === 'dashboard' && dashboardUrl) {
       embedDashboard(dashboardUrl);
-    } else if (exploreUrl && activeTab === 'explore') {
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('explore').style.display = 'none';
+    } else if (activeTab === 'explore' && exploreUrl) {
       embedExplore(exploreUrl);
+      document.getElementById('explore').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
     }
-  }, [dashboardUrl, exploreUrl, activeTab]);
+  }, [activeTab, dashboardUrl, exploreUrl]);
 
   const handleTabSwitch = (tab) => {
+    console.log('Switching tab to:', tab);
     setActiveTab(tab);
-    // Instead of clearing content, we'll just hide/show the appropriate container
-    document.getElementById('dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
-    document.getElementById('explore').style.display = tab === 'explore' ? 'block' : 'none';
   };
 
   return (
