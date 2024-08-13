@@ -19,14 +19,14 @@ app.use((req, res, next) => {
 
 const sdk = LookerNodeSDK.init40();
 
-async function createSignedUrl(targetUrl) {
+async function createSignedUrl(targetUrl, isExplore = false) {
   try {
     const user = {
       external_user_id: '7777777',
       first_name: 'Prabha7',
       last_name: 'Embed7',
       session_length: 3600,
-      force_logout_login: true,
+      force_logout_login: false,
       permissions: [
         'access_data',
         'see_looks',
@@ -40,9 +40,15 @@ async function createSignedUrl(targetUrl) {
       access_filters: {}
     };
 
+    let modifiedUrl = targetUrl;
+    if (!isExplore) {
+      modifiedUrl += '?embed_domain=http://localhost:3000&hide_title=true&hide_filters=true';
+    } else {
+      modifiedUrl += '?embed_domain=http://localhost:3000&hide_title=true&hide_filters=true&toggle_me=false';
+    }
+
     const embedUrl = await sdk.ok(sdk.create_sso_embed_url({
-      target_url: targetUrl,
-      embed_domain: "http://localhost:3000",
+      target_url: modifiedUrl,
       ...user
     }));
 
@@ -66,7 +72,7 @@ app.get('/auth/dashboard', async (req, res) => {
 
 app.get('/auth/explore', async (req, res) => {
   try {
-    const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/explore/sales/order_items`);
+    const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/explore/sales/order_items`, true);
     res.json({ url });
   } catch (error) {
     console.error('Explore embed error:', error);
