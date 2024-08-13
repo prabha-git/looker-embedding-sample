@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@looker/sdk-node": "^24.14.0"
+  }
+}
