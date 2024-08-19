@@ -31,7 +31,8 @@ async function createSignedUrl(targetUrl, isExplore = false) {
         'access_data',
         'see_looks',
         'see_user_dashboards',
-        'explore'
+        'explore',
+        'embed_browse_spaces'
       ],
       models: ['sales'],
       group_ids: [23],
