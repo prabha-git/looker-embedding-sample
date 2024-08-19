@@ -22,9 +22,9 @@ const sdk = LookerNodeSDK.init40();
 async function createSignedUrl(targetUrl, isExplore = false) {
   try {
     const user = {
-      external_user_id: '7777777',
-      first_name: 'Prabha7',
-      last_name: 'Embed7',
+      external_user_id: '7777778',
+      first_name: 'Prabha8',
+      last_name: 'Embed8',
       session_length: 3600,
       force_logout_login: false,
       permissions: [
@@ -34,7 +34,7 @@ async function createSignedUrl(targetUrl, isExplore = false) {
         'explore',
         'embed_browse_spaces'
       ],
-      models: ['sales'],
+      models: ['sales','thelook_partner'],
       group_ids: [23],
       external_group_id: '23',
       user_attributes: { 'locale': 'en_US' },
@@ -43,9 +43,9 @@ async function createSignedUrl(targetUrl, isExplore = false) {
 
     let modifiedUrl = targetUrl;
     if (!isExplore) {
-      modifiedUrl += '?embed_domain=http://localhost:3000&hide_title=true&hide_filters=true';
+      modifiedUrl += '?embed_domain=http://localhost:3000';
     } else {
-      modifiedUrl += '?embed_domain=http://localhost:3000&hide_title=true&hide_filters=true&toggle_me=false';
+      modifiedUrl += '?embed_domain=http://localhost:3000&toggle_me=false';
     }
 
     const embedUrl = await sdk.ok(sdk.create_sso_embed_url({
@@ -61,14 +61,19 @@ async function createSignedUrl(targetUrl, isExplore = false) {
   }
 }
 
-app.get('/auth/dashboard', async (req, res) => {
+app.get('/auth/dashboard/:id', async (req, res) => {
   try {
-    const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/dashboards/332`);
+    const dashboardId = req.params.id;
+    const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/dashboards/${dashboardId}`);
     res.json({ url });
   } catch (error) {
     console.error('Dashboard embed error:', error);
     res.status(500).json({ error: 'Failed to generate dashboard embed URL' });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
 
 app.get('/auth/explore', async (req, res) => {
@@ -79,8 +84,4 @@ app.get('/auth/explore', async (req, res) => {
     console.error('Explore embed error:', error);
     res.status(500).json({ error: 'Failed to generate explore embed URL' });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
 });
