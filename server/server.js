@@ -22,9 +22,9 @@ const sdk = LookerNodeSDK.init40();
 async function createSignedUrl(targetUrl, isExplore = false) {
   try {
     const user = {
-      external_user_id: '7777778',
-      first_name: 'Prabha8',
-      last_name: 'Embed8',
+      external_user_id: '7777777',
+      first_name: 'Prabha7',
+      last_name: 'Embed7',
       session_length: 3600,
       force_logout_login: false,
       permissions: [
@@ -72,10 +72,6 @@ app.get('/auth/dashboard/:id', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-
 app.get('/auth/explore', async (req, res) => {
   try {
     const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/explore/sales/order_items`, true);
@@ -84,4 +80,8 @@ app.get('/auth/explore', async (req, res) => {
     console.error('Explore embed error:', error);
     res.status(500).json({ error: 'Failed to generate explore embed URL' });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
