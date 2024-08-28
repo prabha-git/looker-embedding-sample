@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { LookerEmbedSDK } from '@looker/embed-sdk';
+import { FaHeart } from 'react-icons/fa';
 import './App.css';
 
 function App() {
@@ -19,11 +20,6 @@ function App() {
   };
 
   const embedDashboard = async (dashboardId) => {
-    if (dashboardRef.current) {
-      dashboardRef.current.loadDashboard(dashboardId);
-      return;
-    }
-
     try {
       const response = await fetch(`http://localhost:3001/auth/dashboard/${dashboardId}`, { credentials: 'include' });
       if (!response.ok) {
@@ -31,52 +27,61 @@ function App() {
       }
       const { url } = await response.json();
 
-      LookerEmbedSDK.createDashboardWithId(dashboardId)
-        .appendTo('#dashboard')
-        .withClassName('looker-embed')
-        .withUrl(url)
-        .build()
-        .connect()
-        .then((embed) => {
-          console.log('Dashboard loaded successfully');
-          dashboardRef.current = embed;
-        })
-        .catch((error) => console.error('Error loading dashboard:', error));
+      if (dashboardRef.current) {
+        // If a dashboard is already embedded, update it
+        dashboardRef.current.updateUrl(url);
+      } else {
+        // If no dashboard is embedded yet, create a new one
+        LookerEmbedSDK.createDashboardWithId(dashboardId)
+          .appendTo('#dashboard')
+          .withClassName('looker-embed')
+          .withUrl(url)
+          .build()
+          .connect()
+          .then((embed) => {
+            console.log('Dashboard loaded successfully');
+            dashboardRef.current = embed;
+          })
+          .catch((error) => console.error('Error loading dashboard:', error));
+      }
     } catch (error) {
       console.error('Error fetching dashboard URL:', error);
     }
   };
 
-const embedExplore = async () => {
-  if (exploreRef.current) {
-    return;
-  }
-
-  try {
-    const response = await fetch('http://localhost:3001/auth/explore', { credentials: 'include' });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const embedExplore = async () => {
+    if (exploreRef.current) {
+      return;
     }
-    const { url } = await response.json();
 
-    LookerEmbedSDK.createExploreWithUrl(url)
-      .appendTo('#explore')
-      .withClassName('looker-embed')
-      .build()
-      .connect()
-      .then((embed) => {
-        console.log('Explore loaded successfully');
-        exploreRef.current = embed;
-      })
-      .catch((error) => console.error('Error loading explore:', error));
-  } catch (error) {
-    console.error('Error fetching explore URL:', error);
-  }
-};
+    try {
+      const response = await fetch('http://localhost:3001/auth/explore', { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const { url } = await response.json();
 
-  const renderDashboardLinks = (title, dashboards) => (
+      LookerEmbedSDK.createExploreWithUrl(url)
+        .appendTo('#explore')
+        .withClassName('looker-embed')
+        .build()
+        .connect()
+        .then((embed) => {
+          console.log('Explore loaded successfully');
+          exploreRef.current = embed;
+        })
+        .catch((error) => console.error('Error loading explore:', error));
+    } catch (error) {
+      console.error('Error fetching explore URL:', error);
+    }
+  };
+
+  const renderDashboardLinks = (title, dashboards, isFavorite = false) => (
     <div className="dashboard-section">
-      <h2>{title}</h2>
+      <h2>
+        {isFavorite && <FaHeart className="favorite-icon" />}
+        {title}
+      </h2>
       <div className="dashboard-grid">
         {dashboards.map(dashboard => (
           <div key={dashboard.id} className="dashboard-item">
@@ -120,6 +125,11 @@ const embedExplore = async () => {
           <div id="home" style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
             <h1 className="welcome-message">Welcome, Prabha Arivalagan</h1>
             <div className="sections-container">
+              {renderDashboardLinks('Favorites', [
+                { id: 'favorite1', title: 'Favorite 1' },
+                { id: 'favorite2', title: 'Favorite 2' },
+                { id: 'favorite3', title: 'Favorite 3' },
+              ], true)}
               {renderDashboardLinks('Sales', [
                 { id: 116, title: 'Dashboard 116' },
                 { id: 117, title: 'Dashboard 117' },
