@@ -20,11 +20,6 @@ function App() {
   };
 
   const embedDashboard = async (dashboardId) => {
-    if (dashboardRef.current) {
-      dashboardRef.current.loadDashboard(dashboardId);
-      return;
-    }
-
     try {
       const response = await fetch(`http://localhost:3001/auth/dashboard/${dashboardId}`, { credentials: 'include' });
       if (!response.ok) {
@@ -32,17 +27,23 @@ function App() {
       }
       const { url } = await response.json();
 
-      LookerEmbedSDK.createDashboardWithId(dashboardId)
-        .appendTo('#dashboard')
-        .withClassName('looker-embed')
-        .withUrl(url)
-        .build()
-        .connect()
-        .then((embed) => {
-          console.log('Dashboard loaded successfully');
-          dashboardRef.current = embed;
-        })
-        .catch((error) => console.error('Error loading dashboard:', error));
+      if (dashboardRef.current) {
+        // If a dashboard is already embedded, update it
+        dashboardRef.current.updateUrl(url);
+      } else {
+        // If no dashboard is embedded yet, create a new one
+        LookerEmbedSDK.createDashboardWithId(dashboardId)
+          .appendTo('#dashboard')
+          .withClassName('looker-embed')
+          .withUrl(url)
+          .build()
+          .connect()
+          .then((embed) => {
+            console.log('Dashboard loaded successfully');
+            dashboardRef.current = embed;
+          })
+          .catch((error) => console.error('Error loading dashboard:', error));
+      }
     } catch (error) {
       console.error('Error fetching dashboard URL:', error);
     }
