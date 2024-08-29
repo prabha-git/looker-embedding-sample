@@ -4,9 +4,11 @@ import './App.css';
 
 function App() {
   const [dashboardUrl, setDashboardUrl] = useState('');
+  const [dashboard1Url, setDashboard1Url] = useState('');
   const [exploreUrl, setExploreUrl] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
   const dashboardRef = useRef(null);
+  const dashboard1Ref = useRef(null);
   const exploreRef = useRef(null);
 
   useEffect(() => {
@@ -17,16 +19,19 @@ function App() {
   const fetchEmbedUrls = async () => {
     try {
       const dashboardResponse = await fetch('http://localhost:3001/auth/dashboard', { credentials: 'include' });
+      const dashboard1Response = await fetch('http://localhost:3001/auth/dashboard1', { credentials: 'include' });
       const exploreResponse = await fetch('http://localhost:3001/auth/explore', { credentials: 'include' });
 
-      if (!dashboardResponse.ok || !exploreResponse.ok) {
-        throw new Error(`HTTP error! status: ${dashboardResponse.status} ${exploreResponse.status}`);
+      if (!dashboardResponse.ok || !dashboard1Response.ok || !exploreResponse.ok) {
+        throw new Error(`HTTP error! status: ${dashboardResponse.status} ${dashboard1Response.status} ${exploreResponse.status}`);
       }
 
       const dashboardData = await dashboardResponse.json();
+      const dashboard1Data = await dashboard1Response.json();
       const exploreData = await exploreResponse.json();
 
       setDashboardUrl(dashboardData.url);
+      setDashboard1Url(dashboard1Data.url);
       setExploreUrl(exploreData.url);
     } catch (error) {
       console.error('Error fetching auth URLs:', error);
@@ -36,30 +41,30 @@ function App() {
   const clearEmbedContainer = (containerId) => {
     const container = document.getElementById(containerId);
     if (container) {
-      container.innerHTML = '';  // Clear any existing iframe
+      container.innerHTML = '';
     }
   };
 
-  const embedDashboard = async (url) => {
-    if (dashboardRef.current) {
-      console.log('Dashboard iframe already exists, reusing it.');
+  const embedDashboard = async (url, containerId, ref) => {
+    if (ref.current) {
+      console.log(`${containerId} iframe already exists, reusing it.`);
       return;
     }
-    console.log('Embedding dashboard with URL:', url);
+    console.log(`Embedding ${containerId} with URL:`, url);
 
-    clearEmbedContainer('dashboard');  // Clear existing content
+    clearEmbedContainer(containerId);
 
     LookerEmbedSDK.createDashboardWithUrl(url)
-      .appendTo('#dashboard')
+      .appendTo(`#${containerId}`)
       .withClassName('looker-embed')
       .withTheme('Looker')
       .build()
       .connect()
       .then((embedded) => {
-        console.log('Dashboard connected successfully');
-        dashboardRef.current = embedded;
+        console.log(`${containerId} connected successfully`);
+        ref.current = embedded;
       })
-      .catch((error) => console.error('Error connecting to Looker embed:', error));
+      .catch((error) => console.error(`Error connecting to Looker embed for ${containerId}:`, error));
   };
 
   const embedExplore = async (url) => {
@@ -69,7 +74,7 @@ function App() {
     }
     console.log('Embedding explore with URL:', url);
 
-    clearEmbedContainer('explore');  // Clear existing content
+    clearEmbedContainer('explore');
 
     LookerEmbedSDK.createExploreWithUrl(url)
       .appendTo('#explore')
@@ -86,15 +91,13 @@ function App() {
 
   useEffect(() => {
     if (activeTab === 'dashboard' && dashboardUrl) {
-      embedDashboard(dashboardUrl);
-      document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('explore').style.display = 'none';
+      embedDashboard(dashboardUrl, 'dashboard', dashboardRef);
+    } else if (activeTab === 'dashboard1' && dashboard1Url) {
+      embedDashboard(dashboard1Url, 'dashboard1', dashboard1Ref);
     } else if (activeTab === 'explore' && exploreUrl) {
       embedExplore(exploreUrl);
-      document.getElementById('explore').style.display = 'block';
-      document.getElementById('dashboard').style.display = 'none';
     }
-  }, [activeTab, dashboardUrl, exploreUrl]);
+  }, [activeTab, dashboardUrl, dashboard1Url, exploreUrl]);
 
   const handleTabSwitch = (tab) => {
     console.log('Switching tab to:', tab);
@@ -106,13 +109,19 @@ function App() {
       <header className="App-header">
         <h1>Looker Embedded Content</h1>
       </header>
-      <main style={{ height: 'calc(100vh - 100px)' }}>
-        <div className="tabs">
+      <div className="content">
+        <nav className="side-nav">
           <button
             onClick={() => handleTabSwitch('dashboard')}
             className={activeTab === 'dashboard' ? 'active' : ''}
           >
-            Dashboard
+            Sales Overview
+          </button>
+          <button
+            onClick={() => handleTabSwitch('dashboard1')}
+            className={activeTab === 'dashboard1' ? 'active' : ''}
+          >
+            Brand Lookup
           </button>
           <button
             onClick={() => handleTabSwitch('explore')}
@@ -120,12 +129,13 @@ function App() {
           >
             Explore
           </button>
-        </div>
-        <div className="tab-content" style={{ height: 'calc(100% - 50px)' }}>
-          <div id="dashboard" style={{ width: '100%', height: '100%', display: activeTab === 'dashboard' ? 'block' : 'none' }}></div>
-          <div id="explore" style={{ width: '100%', height: '100%', display: activeTab === 'explore' ? 'block' : 'none' }}></div>
-        </div>
-      </main>
+        </nav>
+        <main>
+          <div id="dashboard" style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}></div>
+          <div id="dashboard1" style={{ display: activeTab === 'dashboard1' ? 'block' : 'none' }}></div>
+          <div id="explore" style={{ display: activeTab === 'explore' ? 'block' : 'none' }}></div>
+        </main>
+      </div>
     </div>
   );
 }

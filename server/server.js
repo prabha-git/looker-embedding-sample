@@ -34,7 +34,7 @@ async function createSignedUrl(targetUrl, isExplore = false) {
         'explore',
         'embed_browse_spaces'
       ],
-      models: ['sales'],
+      models: ['sales','thelook_partner'],
       group_ids: [23],
       external_group_id: '23',
       user_attributes: { 'locale': 'en_US' },
@@ -68,6 +68,16 @@ app.get('/auth/dashboard', async (req, res) => {
   } catch (error) {
     console.error('Dashboard embed error:', error);
     res.status(500).json({ error: 'Failed to generate dashboard embed URL' });
+  }
+});
+
+app.get('/auth/dashboard1', async (req, res) => {
+  try {
+    const url = await createSignedUrl(`${process.env.LOOKERSDK_BASE_URL}/embed/dashboards/115`);
+    res.json({ url });
+  } catch (error) {
+    console.error('Dashboard 1 embed error:', error);
+    res.status(500).json({ error: 'Failed to generate dashboard 1 embed URL' });
   }
 });
 
